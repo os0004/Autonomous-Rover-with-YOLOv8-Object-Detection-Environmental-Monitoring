@@ -85,5 +85,5 @@ sudo apt update && sudo apt upgrade
 sudo apt install python3-pip git
 pip3 install opencv-python ultralytics flask
 
-## Demo screenshots
-<img width="2559" height="1425" alt="Image" src="https://github.com/user-attachments/assets/d0cd654f-cc91-462d-84b6-da224b3dafa7" />
+## Web Interface
+<img width="2559" height="1425" alt="Image" src="https://github.com/user-attachments/assets/4cda2831-cab2-4917-bf8a-8b51ae48c090" />
