@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center p-5">
+
+    <h1 class="text-3xl font-bold mb-5">ESP32 Robot Control</h1>
+
+    <div class="grid grid-cols-3 gap-8 w-full max-w-5xl">
+        <!-- Motor Control -->
+        <div class="bg-gray-800 p-5 rounded-lg shadow-md text-center">
+            <h2 class="text-xl font-semibold mb-4">Motor Control</h2>
+            <div class="flex flex-col items-center gap-3">
+                <button class="bg-blue-600 px-6 py-3 rounded-lg" onclick="sendMotorCommand('forward')">⬆</button>
+                <div class="flex gap-3">
+                    <button class="bg-blue-600 px-6 py-3 rounded-lg" onclick="sendMotorCommand('left')">⬅</button>
+                    <button class="bg-blue-600 px-6 py-3 rounded-lg" onclick="sendMotorCommand('stop')">||</button>
+                    <button class="bg-blue-600 px-6 py-3 rounded-lg" onclick="sendMotorCommand('right')">➡</button>
+                </div>
+                <button class="bg-blue-600 px-6 py-3 rounded-lg" onclick="sendMotorCommand('backward')">⬇</button>
+            </div>
+        </div>
+
+        <!-- Video Feed -->
+        <div class="bg-gray-800 p-5 rounded-lg shadow-md text-center">
+            <h2 class="text-xl font-semibold mb-4">Video Stream</h2>
+            <button id="toggleButton" class="bg-green-600 px-4 py-2 rounded-lg mb-3" onclick="toggleVideo()">Start Video</button>
+            <img id="videoFrame" src={{ url_for('static', filename='bg.jpg') }} width="100%" height="auto" class="rounded-lg" />
+        </div>
+
+        <!-- Pan & Tilt Control -->
+        <div class="bg-gray-800 p-5 rounded-lg shadow-md text-center">
+            <h2 class="text-xl font-semibold mb-4">Pan & Tilt Control</h2>
+            <canvas id="joystickServo" class="mx-auto bg-gray-700 rounded-lg" width="200" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Autonomous Mode Button -->
+    <!-- <button id = 'toggleButton' class="bg-yellow-600 px-6 py-3 rounded-lg mt-6" onclick="toggleAutonomousMode()">Autonomous Mode</button> -->
+    
+    <button id="toggleButton1" data-state="0" 
+    class="bg-yellow-600 text-white px-6 py-3 rounded-lg mt-6 transition-all"
+    onclick="toggleAutonomousMode()">
+    Autonomous Mode
+</button>
+
+<button id="toggleButton-led" data-state="0" 
+    class="bg-yellow-600 text-white px-6 py-3 rounded-lg mt-6 transition-all"
+    onclick="toggleLED()">
+    LED STATUS
+</button>
+
+
+    <!-- Air Quality Gauge -->
+    <div class="bg-gray-800 p-5 rounded-lg shadow-md text-center mt-6 w-80">
+        <h2 class="text-xl font-semibold mb-3">Air Quality</h2>
+        <div class="w-full bg-gray-700 rounded-lg h-6 relative">
+            <div id="airQualityBar" class="bg-red-500 h-6 rounded-lg" style="width: 50%;"></div>
+        </div>
+        <p id="airQualityText" class="mt-2">Air Quality: 50%</p>
+    </div>
+
+    <script>
+        function sendMotorCommand(direction) {
+            if (direction == "forward"){
+                fetch(`/move?x=0&y=1`);
+            }
+            else if (direction == "backward"){
+                fetch(`/move?x=0&y=-1`);
+            }
+            else if  (direction == "left") {
+                fetch(`/move?x=-1&y=0`);
+            }
+            else if (direction == "right") {
+                fetch(`/move?x=1&y=0`);
+            }else if (direction == "stop") {
+                fetch(`/move?x=0&y=0`);
+            }
+            
+        }
+        
+        //  async function toggleAutonomousMode() {
+        //     let button = document.getElementById("toggleButton");
+        //     let currentState = button.getAttribute("data-state");
+        //     let newState = currentState === "1" ? "0" : "1";
+
+        //     try {
+        //         let response = await fetch(`http://192.168.1.100/autonomous?state=${newState}`);
+        //         console.log(response);
+        //         if (response.ok) {
+        //             button.innerText = newState === "1" ? "Turn Off" : "Turn On";
+        //             button.setAttribute("data-state", newState);
+        //         } else {
+        //             alert("Failed to toggle state!");
+        //         }
+        //     } catch (error) {
+        //         alert("Error reaching the ESP32!");
+        //     }
+        // }
+      
+        async function toggleLED() {
+        let button = document.getElementById("toggleButton-led");
+        let currentState = button.getAttribute("data-state");
+        let newState = currentState === "1" ? "0" : "1";
+
+        try {
+            // let response = await fetch(`http://192.168.1.100/led/${newState === "1" ? "on" : "off"}`);
+            console.log(`led/${newState === "1" ? "on" : "off"}`);
+            let response = await fetch(`led/${newState === "1" ? "on" : "off"}`);
+
+            if (response.ok) {
+                button.innerText = newState === "1" ? "LED STATUS Off" : "LED STATUS On";
+                button.setAttribute("data-state", newState);
+                button.classList.toggle("bg-yellow-600");
+                button.classList.toggle("bg-green-600");
+            } else {
+                alert("Failed to toggle LED!");
+            }
+        } catch (error) {
+            alert("Error reaching the ESP32!");
+        }
+    }
+
+        async function toggleAutonomousMode() {
+        let button = document.getElementById("toggleButton1");
+        let currentState = button.getAttribute("data-state");
+        let newState = currentState === "1" ? "0" : "1";
+
+
+
+        try {
+            // let response = await fetch(`http://192.168.1.100/autonomous?state=${newState}`);
+            let response = await fetch(`/autonomous?state=${newState}`);
+            if (response.ok) {
+                button.setAttribute("data-state", newState);
+
+                // Toggle button text and color
+                if (newState === "1") {
+                    button.innerText = "Autonomous Mode: On";
+                    button.classList.remove("bg-yellow-600");
+                    button.classList.add("bg-red-600"); // Change to red when ON
+                } else {
+                    button.innerText = "Autonomous Mode: Off";
+                    button.classList.remove("bg-red-600");
+                    button.classList.add("bg-yellow-600"); // Change to yellow when OFF
+                }
+            } else {
+                alert("Failed to toggle state!");
+            }
+        } catch (error) {
+            alert("Error reaching the ESP32!");
+        }
+    }
+
+
+        function toggleVideo() {
+            var img = document.getElementById("videoFrame");
+            var button = document.getElementById("toggleButton");
+
+            if (img.getAttribute("src") === "{{ url_for('static', filename='bg.jpg') }}") {
+                img.setAttribute("src", "{{ url_for('video_feed') }}");
+                button.textContent = "Stop Video";
+            } else {
+                img.setAttribute("src", "{{ url_for('static', filename='bg.jpg') }}");
+                button.textContent = "Start Video";
+            }
+        }
+
+        function updateAirQuality(value) {
+            let bar = document.getElementById("airQualityBar");
+            let text = document.getElementById("airQualityText");
+            bar.style.width = `${value}%`;
+            text.textContent = `Air Quality: ${value} PPM`;
+            bar.style.backgroundColor = value > 75 ? "green" : value > 50 ? "yellow" : "red";
+        }
+
+        setInterval(() => {
+            fetch('/airquality')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                updateAirQuality(data.air_quality);
+            })
+            .catch(error => console.error("Error fetching air quality:", error));
+        }, 5000);
+
+        function setupJoystick(canvasId, sendUrl) {
+            let canvas = document.getElementById(canvasId);
+            let ctx = canvas.getContext("2d");
+            let dragging = false;
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
+            let radius = 30;
+            
+            function drawJoystick(x, y) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+                ctx.fillStyle = "#444";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#ddd";
+                ctx.fill();
+            }
+            
+            canvas.addEventListener("mousedown", (event) => {
+                dragging = true;
+            });
+
+            canvas.addEventListener("mousemove", (event) => {
+                if (dragging) {
+                    let rect = canvas.getBoundingClientRect();
+                    let x = event.clientX - rect.left;
+                    let y = event.clientY - rect.top;
+                    drawJoystick(x, y);
+                    fetch(`${sendUrl}?pan=${x}&tilt=${y}`);
+                }
+            });
+
+            canvas.addEventListener("mouseup", () => {
+                dragging = false;
+                drawJoystick(centerX, centerY);
+            });
+
+            drawJoystick(centerX, centerY);
+        }
+
+        setupJoystick("joystickServo", "/servo");
+    </script>
+</body>
+</html>

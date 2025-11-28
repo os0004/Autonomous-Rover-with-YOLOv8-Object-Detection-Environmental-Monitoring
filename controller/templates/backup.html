@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        function toggleVideo() {
+            var img = document.getElementById("videoFrame");
+            var button = document.getElementById("toggleButton");
+
+            if (img.getAttribute("src") === "{{ url_for('static', filename='static.png') }}") {
+                img.setAttribute("src", "{{ url_for('video_feed') }}");
+                button.textContent = "Stop Video";
+            } else {
+                img.setAttribute("src", "{{ url_for('static', filename='static.png') }}");
+                button.textContent = "Start Video";
+            }
+        }
+    </script>
+
+
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center p-5">
+
+    <h1 class="text-3xl font-bold mb-5">ESP32 Robot Control</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Motor Control -->
+        <div class="bg-gray-800 p-5 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold text-center">Motor Control</h2>
+            <canvas id="joystickMove" class="mx-auto mt-4 bg-gray-700 rounded-lg" width="200" height="200"></canvas>
+        </div>
+
+        <!-- Servo Control -->
+        <div class="bg-gray-800 p-5 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold text-center">Pan & Tilt Control</h2>
+            <canvas id="joystickServo" class="mx-auto mt-4 bg-gray-700 rounded-lg" width="200" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="feed">
+        <h1>Video Stream</h1>
+        <button id="toggleButton" onclick="toggleVideo()">Start Video</button>
+        <br><br>
+        <img id="videoFrame" src={{ url_for('static', filename='static.png') }} width="720" height="360" />
+    </div>
+
+    <script>
+        function setupJoystick(canvasId, sendUrl, isMotor = false) {
+            let canvas = document.getElementById(canvasId);
+            let ctx = canvas.getContext("2d");
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
+            let radius = 30;
+            let lastX = 0, lastY = 0;
+            let dragging = false;
+
+            function drawJoystick(x, y) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+                ctx.fillStyle = "#444";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#ddd";
+                ctx.fill();
+            }
+
+            function sendCommand(x, y) {
+                let newX = x < centerX - 30 ? -1 : x > centerX + 30 ? 1 : 0;
+                let newY = y < centerY - 30 ? 1 : y > centerY + 30 ? -1 : 0;
+
+                if (isMotor && (newX !== lastX || newY !== lastY)) {
+                    fetch(`${sendUrl}?x=${newX}&y=${newY}`);
+                    lastX = newX;
+                    lastY = newY;
+                } else if (!isMotor) {
+                    let pan = Math.abs((Math.round(Math.floor((x / canvas.width) * 180) / 5) * 5) - 180);
+                    let tilt = Math.round(Math.floor((y / canvas.width) * 180) / 5) * 5
+                    fetch(`${sendUrl}?pan=${pan}&tilt=${tilt}`);
+                }
+            }
+
+            canvas.addEventListener("touchstart", (event) => {
+                dragging = true;
+                let rect = canvas.getBoundingClientRect();
+                let x = event.touches[0].clientX - rect.left;
+                let y = event.touches[0].clientY - rect.top;
+                drawJoystick(x, y);
+                sendCommand(x, y);
+            });
+
+            canvas.addEventListener("touchmove", (event) => {
+                if (dragging) {
+                    let rect = canvas.getBoundingClientRect();
+                    let x = event.touches[0].clientX - rect.left;
+                    let y = event.touches[0].clientY - rect.top;
+                    drawJoystick(x, y);
+                    sendCommand(x, y);
+                }
+            });
+
+            canvas.addEventListener("touchend", () => {
+                dragging = false;
+                drawJoystick(centerX, centerY);
+                sendCommand(centerX, centerY);
+            });
+
+            drawJoystick(centerX, centerY);
+        }
+
+        setupJoystick("joystickMove", "/move", true);
+        setupJoystick("joystickServo", "/servo");
+    </script>
+</body>
+</html>
