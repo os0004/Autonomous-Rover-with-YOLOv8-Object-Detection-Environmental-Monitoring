@@ -1,114 +1,86 @@
-🚀 Autonomous Rover with YOLOv8 Object Detection & Environmental Monitoring
+# Autonomous Rover Project
 
-This project is a hybrid autonomous rover system built using Raspberry Pi 3B+ and ESP32, designed for object detection, navigation, and air-quality monitoring. The rover supports both manual control through a web interface and autonomous obstacle avoidance, making it ideal for robotics, IoT, and computer vision applications.
+## Overview
+This project is an **Autonomous Rover** capable of performing **manual and autonomous navigation**, **obstacle detection**, and **object recognition**. It integrates **Raspberry Pi 3B+**, **ESP32**, and a **Pi Camera** to create a smart rover with real-time decision-making and sensor integration.
 
-🔧 Tech Stack
-Hardware
+The rover is designed to be lightweight, modular, and capable of performing environmental sensing and object detection using **YOLOv8n** and the **COCO dataset**.
 
-Raspberry Pi 3B+ (1GB RAM)
+---
 
-ESP32 Dev Module
+## Features
+- **Manual Control:** Operate the rover via a web interface.
+- **Autonomous Navigation:** Obstacle detection and avoidance using ultrasonic sensors.
+- **Object Recognition:** Detect and classify objects in real-time using YOLOv8n.
+- **Environmental Monitoring:** Air quality monitoring using MQ2 gas sensor.
+- **Load Balancing:** Raspberry Pi handles processing and camera input; ESP32 manages peripherals and motor control.
 
-Pi Camera
+---
 
-Ultrasonic Sensor (HC-SR04)
+## Hardware Components
+| Component       | Description                                      |
+|-----------------|--------------------------------------------------|
+| Raspberry Pi 3B+| Main controller for camera and processing tasks |
+| ESP32           | Peripheral control (motors, servos, sensors)    |
+| Pi Camera       | Video feed and object recognition input         |
+| Ultrasonic Sensor| Obstacle detection                              |
+| MQ2 Gas Sensor  | Air quality measurement                          |
+| Motor Drivers   | Control motors and servos for movement           |
 
-MQ2 Gas Sensor
+---
 
-Motor Driver + Servo Motors
+## Software & Libraries
+- **Raspberry Pi OS**
+- **Python 3**
+- **YOLOv8n** (Ultralytics)
+- **OpenCV** for camera handling
+- **ESPAsyncWebServer** for web interface
+- **MQTT/HTTP** for communication between Pi and ESP32
+- **Flask** or **FastAPI** (optional) for web server on Raspberry Pi
 
-Software
+---
 
-Python
+## System Architecture
+    +-----------------+
+    |  Raspberry Pi   |
+    |-----------------|
+    |  Pi Camera      |
+    |  YOLOv8n Model |
+    |  Object Detection|
+    +--------+--------+
+             |
+             | WiFi / HTTP / MQTT
+             |
+    +--------v--------+
+    |      ESP32      |
+    |-----------------|
+    | Motors & Servos |
+    | Ultrasonic Sensor|
+    | MQ2 Gas Sensor  |
+    +-----------------+
 
-YOLOv8n (Ultralytics)
 
-COCO Dataset
 
-ESPAsyncWebServer (ESP32)
 
-HTML/CSS/JS (Web UI)
 
-⚙️ System Architecture
+---
 
-The project uses a distributed processing model:
+## Functionality
 
-Raspberry Pi (High-Level Processing)
+### Manual Mode
+- Control rover using a web interface.
+- Commands sent to ESP32 for motor and servo actuation.
 
-Runs YOLOv8n for real-time object detection
+### Autonomous Mode
+- Rover navigates while detecting obstacles using the ultrasonic sensor.
+- YOLOv8n identifies objects in real-time.
+- Gas sensor monitors environmental air quality (PPM levels).
 
-Handles Pi Camera feed
+---
 
-Performs inference and recognition
+## Setup Instructions
 
-Sends high-level commands or alerts
-
-ESP32 (Low-Level Control)
-
-Controls motors, servos, and movement
-
-Manages ultrasonic sensor
-
-Reads MQ2 gas sensor data
-
-Hosts web dashboard using ESPAsyncWebServer
-
-This separation ensures smooth performance even on low-power hardware.
-
-🧠 Key Features
-✔ Real-Time Object Detection
-
-YOLOv8n trained on COCO dataset
-
-Live detection through Pi Camera
-
-Displays class labels & bounding boxes
-
-Supports recognition for navigation decisions
-
-✔ Autonomous Navigation
-
-Ultrasonic sensor for obstacle detection
-
-Automated braking & directional decision-making
-
-Hybrid mode: Autonomous + Manual
-
-✔ Manual Control Interface
-
-ESP32 hosts a responsive web dashboard
-
-Control motors & servo angles
-
-Real-time sensor readings
-
-No external app required
-
-✔ Air Quality Monitoring
-
-MQ2 sensor integration
-
-PPM calculation for smoke/flammable gases
-
-Alerts triggered on threshold levels
-
-📊 Output
-
-Live object detection stream
-
-Web-based rover controls
-
-Gas-level monitoring dashboard
-
-Obstacle avoidance logs
-
-📁 Project Structure
-/RaspberryPi/
-   ├── vision.py
-   ├── yolov8_engine/
-   ├── requirements.txt
-
-/ESP32/
-   ├── main.ino
-   ├── webserver/
-   ├── motor_driver/
+### 1. Raspberry Pi
+```bash
+sudo apt update && sudo apt upgrade
+sudo apt install python3-pip git
+pip3 install opencv-python ultralytics flask
